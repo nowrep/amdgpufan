@@ -1,5 +1,3 @@
-#define _XOPEN_SOURCE 700
-
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -111,7 +109,7 @@ static bool set_pwm_manual(bool manual)
 static bool set_pwm(uint8_t value)
 {
     char buf[4];
-    uint8_t val = (value > 100 ? 100 : value) / 100.0 * 255;
+    uint8_t val = value / 100.0 * 255;
     snprintf(buf, sizeof(buf), "%" PRIu8, val);
     return write_file(pwm_file, buf, 3);
 }
@@ -143,6 +141,10 @@ static bool load_config(const char *path)
             sscanf(line, "%u %u", &temp, &pwm);
             if (config.fan_curve_count >= 20) {
                 fprintf(stderr, "Maximum 20 fan curve entries reached\n");
+                return false;
+            }
+            if (pwm > 100) {
+                fprintf(stderr, "Maximum pwm value is 100\n");
                 return false;
             }
             struct fan_curve *curve = &config.fan_curve[config.fan_curve_count++];
