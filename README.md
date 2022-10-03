@@ -1,0 +1,2 @@
+# amdgpufan
+amdgpu fan control
