@@ -144,7 +144,7 @@ static bool load_config(const char *path)
                 return false;
             }
             if (pwm > 100) {
-                fprintf(stderr, "Maximum pwm value is 100\n");
+                fprintf(stderr, "Maximum fan speed value is 100\n");
                 return false;
             }
             struct fan_curve *curve = &config.fan_curve[config.fan_curve_count++];
@@ -209,7 +209,7 @@ static void print_help()
     printf("\n");
     printf("Options:\n");
     printf("  -c CONFIG_FILE        Specify config path\n");
-    printf("  -d                    Enable debug logging\n");
+    printf("  -d --debug            Enable debug logging\n");
     printf("  -h --help             Show this help message\n");
     printf("  -v --version          Show version\n");
 }
@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
                 conf_file = argv[2];
                 argc -= 2;
                 argv += 2;
-            } else if (!strcmp(argv[1], "-d")) {
+            } else if (!strcmp(argv[1], "-d") || !strcmp(argv[1], "--debug")) {
                 debug = true;
                 argc -= 1;
                 argv += 1;
