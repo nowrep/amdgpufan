@@ -24,7 +24,7 @@ debug:
 
 install: all
 	install -D -m 755 -p $(TARGET) $(DESTDIR)/usr/bin/$(TARGET)
-	install -D -p $(TARGET).service $(DESTDIR)/$(SYSTEMD_UNIT_PATH)/$(TARGET).service
+	install -D -m 644 -p $(TARGET).service $(DESTDIR)/$(SYSTEMD_UNIT_PATH)/$(TARGET).service
 
 uninstall:
 	rm -f $(DESTDIR)/usr/bin/$(TARGET)

@@ -1,0 +1,26 @@
+_pkgbase=amdgpufan
+pkgbase=${_pkgbase}-git
+pkgname=amdgpufan-git
+pkgdesc='AMDGPU Fan Control'
+conflicts=('amdgpufan')
+pkgver=r6.a85aa7e
+pkgrel=1
+url='https://github.com/nowrep/amdgpufan'
+license=('GPL2')
+arch=('x86_64')
+makedepends=('git' 'gcc')
+source=("$_pkgbase::git+$url")
+sha512sums=('SKIP')
+
+pkgver() {
+    cd "$_pkgbase"
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+    make -C "$_pkgbase"
+}
+
+package() {
+    make -C "$_pkgbase" DESTDIR="$pkgdir" install
+}
