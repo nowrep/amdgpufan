@@ -13,11 +13,11 @@ Fan control based on highest GPU temperature (edge, junction or memory).
 
 ### Building
 
-    make &&& make install
+    make && make install
 
 ### Configuration
 
-/etc/amdgpufan.conf
+`/etc/amdgpufan.conf`
 
 ```sh
 # card
@@ -31,3 +31,7 @@ card0
 94 50
 98 60
 ```
+
+Start systemd service
+
+    systemctl enable --now amdgpufan

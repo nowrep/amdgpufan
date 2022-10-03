@@ -1,0 +1,9 @@
+[Unit]
+Description=AMDGPU fan
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/bin/amdgpufan
+
+[Install]
+WantedBy=multi-user.target
