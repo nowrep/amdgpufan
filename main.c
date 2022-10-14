@@ -35,7 +35,7 @@ static char pwm_file[128];
 
 static bool debug = false;
 static bool closing = false;
-static uint8_t current_pwm = 0;
+static int16_t current_pwm = -1;
 static int slowdown_ticks = 0;
 
 #define DBG(x, ...) if (debug) { fprintf(stderr, "D: " x "\n", __VA_ARGS__); }
