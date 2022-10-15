@@ -325,5 +325,5 @@ int main(int argc, char *argv[])
 
     set_pwm_manual(false);
 
-    return 0;
+    return closing ? 0 : 5;
 }
