@@ -175,6 +175,27 @@ static bool load_config(const char *path)
     return true;
 }
 
+static int get_vendor(const char *card)
+{
+    char buf[512];
+    snprintf(buf, sizeof(buf), "/sys/class/drm/%s/device/vendor", card);
+
+    FILE *f = fopen(buf, "r");
+    if (!f) {
+        return 0;
+    }
+
+    size_t s = fread(buf, 1, sizeof(buf), f);
+    fclose(f);
+
+    if (s <= 0) {
+        return 0;
+    }
+
+    buf[s] = '\0';
+    return strtol(buf, NULL, 16);
+}
+
 static bool load_paths(const char *card)
 {
     char buf[512];
@@ -267,6 +288,11 @@ int main(int argc, char *argv[])
     if (!load_config(conf_file)) {
         fprintf(stderr, "Failed to load config from '%s'\n", conf_file);
         return 1;
+    }
+
+    int vendor = get_vendor(config.card);
+    if (vendor != 0x1002) {
+        fprintf(stderr, "Warning: Card vendor not AMD: %#x\n", vendor);
     }
 
     if (!load_paths(config.card)) {
