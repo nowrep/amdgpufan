@@ -22,6 +22,8 @@ Fan control based on highest GPU temperature (edge, junction or memory).
 ```sh
 # card
 card0
+# optional: ignore memory temperature
+no-memory
 # temperature fanspeed
 50 0
 60 10

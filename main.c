@@ -34,6 +34,7 @@ static char pwm_enable_file[128];
 static char pwm_file[128];
 
 static bool debug = false;
+static bool no_memory = false;
 static bool closing = false;
 static int16_t current_pwm = -1;
 static int slowdown_ticks = 0;
@@ -136,6 +137,8 @@ static bool load_config(const char *path)
         line[strlen(line) - 1] = '\0';
         if (!config.card) {
             config.card = strdup(line);
+        } else if (!strcmp(line, "no-memory")) {
+            no_memory = true;
         } else {
             unsigned temp, pwm;
             sscanf(line, "%u %u", &temp, &pwm);
@@ -285,7 +288,7 @@ int main(int argc, char *argv[])
         if (metrics->temperature_hotspot > temp) {
             temp = metrics->temperature_hotspot;
         }
-        if (metrics->temperature_mem > temp) {
+        if (!no_memory && metrics->temperature_mem > temp) {
             temp = metrics->temperature_mem;
         }
         if (temp == 0) {
