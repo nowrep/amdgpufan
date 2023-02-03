@@ -4,6 +4,8 @@ After=multi-user.target
 
 [Service]
 ExecStart=/usr/bin/amdgpufan
+Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
