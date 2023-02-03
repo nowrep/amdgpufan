@@ -19,17 +19,15 @@ static struct {
     int fan_curve_count;
 } config;
 
-struct gpu_metrics {
-    uint16_t structure_size;
-    uint8_t format_revision;
-    uint8_t content_revision;
-
+struct gpu_temperatures {
     uint16_t temperature_edge;
     uint16_t temperature_hotspot;
     uint16_t temperature_mem;
 };
 
-static char gpu_metrics_file[128];
+static char gpu_temp1_file[128];
+static char gpu_temp2_file[128];
+static char gpu_temp3_file[128];
 static char pwm_enable_file[128];
 static char pwm_file[128];
 
@@ -41,32 +39,33 @@ static int slowdown_ticks = 0;
 
 #define DBG(x, ...) if (debug) { fprintf(stderr, "D: " x "\n", __VA_ARGS__); }
 
-struct gpu_metrics *read_metrics()
+static bool read_temp_input(const char *file, uint16_t *out)
 {
-    static struct gpu_metrics metrics;
-
-    FILE *f = fopen(gpu_metrics_file, "rb");
+    FILE *f = fopen(file, "r");
     if (!f) {
-        return NULL;
+        return false;
     }
-    if (fread(&metrics, 1, sizeof(metrics), f) != sizeof(metrics)) {
+    char buf[32];
+    if (fread(buf, 1, sizeof(buf), f) <= 0) {
         fclose(f);
-        return NULL;
+        return false;
     }
     fclose(f);
+    *out = atoi(buf) / 1000;
+    return *out != 0;
+}
 
-    switch (metrics.format_revision) {
-    case 1:
-        // Desktop
-        return &metrics;
-    case 2:
-        // APU
-        metrics.temperature_hotspot = 0;
-        metrics.temperature_mem = 0;
-        return &metrics;
-    default:
+struct gpu_temperatures *read_temperatures()
+{
+    static struct gpu_temperatures temperatures;
+    if (!read_temp_input(gpu_temp1_file, &temperatures.temperature_edge)) {
         return NULL;
     }
+    read_temp_input(gpu_temp2_file, &temperatures.temperature_hotspot);
+    if (!no_memory) {
+        read_temp_input(gpu_temp3_file, &temperatures.temperature_mem);
+    }
+    return &temperatures;
 }
 
 static uint8_t read_curve_pwm(uint8_t temp)
@@ -199,9 +198,6 @@ static int get_vendor(const char *card)
 static bool load_paths(const char *card)
 {
     char buf[512];
-    snprintf(buf, sizeof(buf), "/sys/class/drm/%s/device/gpu_metrics", card);
-    strcpy(gpu_metrics_file, buf);
-
     snprintf(buf, sizeof(buf), "/sys/class/drm/%s/device/hwmon", card);
 
     DIR *d = opendir(buf);
@@ -224,7 +220,16 @@ static bool load_paths(const char *card)
     snprintf(buf, sizeof(buf), "/sys/class/drm/%s/device/hwmon/%s/pwm1", card, hwmon);
     strcpy(pwm_file, buf);
 
-    return !access(gpu_metrics_file, R_OK) && !access(pwm_enable_file, W_OK) && !access(pwm_file, W_OK);
+    snprintf(buf, sizeof(buf), "/sys/class/drm/%s/device/hwmon/%s/temp1_input", card, hwmon);
+    strcpy(gpu_temp1_file, buf);
+
+    snprintf(buf, sizeof(buf), "/sys/class/drm/%s/device/hwmon/%s/temp2_input", card, hwmon);
+    strcpy(gpu_temp2_file, buf);
+
+    snprintf(buf, sizeof(buf), "/sys/class/drm/%s/device/hwmon/%s/temp3_input", card, hwmon);
+    strcpy(gpu_temp3_file, buf);
+
+    return !access(gpu_temp1_file, R_OK) && !access(pwm_enable_file, W_OK) && !access(pwm_file, W_OK);
 }
 
 static void print_help()
@@ -304,18 +309,18 @@ int main(int argc, char *argv[])
 
     while (!closing) {
         sleep(1);
-        struct gpu_metrics *metrics = read_metrics();
-        if (!metrics) {
-            fprintf(stderr, "Failed to read metrics\n");
+        struct gpu_temperatures *temperatures = read_temperatures();
+        if (!temperatures) {
+            fprintf(stderr, "Failed to read temperatures\n");
             break;
         }
 
-        uint8_t temp = metrics->temperature_edge;
-        if (metrics->temperature_hotspot > temp) {
-            temp = metrics->temperature_hotspot;
+        uint8_t temp = temperatures->temperature_edge;
+        if (temperatures->temperature_hotspot > temp) {
+            temp = temperatures->temperature_hotspot;
         }
-        if (!no_memory && metrics->temperature_mem > temp) {
-            temp = metrics->temperature_mem;
+        if (temperatures->temperature_mem > temp) {
+            temp = temperatures->temperature_mem;
         }
         if (temp == 0) {
             fprintf(stderr, "Invalid temperature read\n");
